@@ -2,26 +2,26 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import google.generativeai as genai
-from PIL import Image
-import io
 import base64
+import random
+import string
+import json
+from datetime import datetime
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Configure Gemini
-# IMPORTANT: Set your API key as environment variable GEMINI_API_KEY
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')  # or gemini-2.0-flash-exp
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
     print("WARNING: GEMINI_API_KEY not set. Using fallback mode.")
 
 @app.route('/')
 def index():
-    """Serve the main HTML page"""
     return send_from_directory('.', 'index.html')
 
 @app.route('/style.css')
@@ -34,49 +34,50 @@ def serve_js():
 
 @app.route('/generate', methods=['POST'])
 def generate_image():
-    """Generate image from prompt using Gemini"""
     data = request.json
     prompt = data.get('prompt', '').strip()
     
     if not prompt:
         return jsonify({'error': 'Prompt is required'}), 400
     
-    if not model:
-        # Fallback: return a placeholder image
-        return jsonify({
-            'image': generate_fallback_image(prompt),
-            'prompt': prompt
-        })
-    
     try:
-        # Generate image using Gemini
-        response = model.generate_content(
-            f"Generate an image based on this description: {prompt}",
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.8,
-                top_p=0.95,
-                top_k=40,
-                max_output_tokens=2048,
+        if model:
+            # Try to generate with Gemini
+            response = model.generate_content(
+                f"Generate an image based on this description: {prompt}. Return as base64 encoded image.",
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.8,
+                    top_p=0.95,
+                    top_k=40,
+                    max_output_tokens=2048,
+                )
             )
-        )
-        
-        # Extract image from response
-        if hasattr(response, '_result') and response._result.candidates:
-            # Handle response format
-            image_data = response._result.candidates[0].content.parts[0].data
-        elif hasattr(response, 'candidates') and response.candidates:
-            image_data = response.candidates[0].content.parts[0].data
+            
+            # Try to extract image data
+            image_data = None
+            if hasattr(response, '_result') and response._result.candidates:
+                parts = response._result.candidates[0].content.parts
+                for part in parts:
+                    if hasattr(part, 'data'):
+                        image_data = part.data
+                        break
+                    elif hasattr(part, 'text') and part.text:
+                        # Check if it's a base64 string
+                        try:
+                            base64.b64decode(part.text[:100])
+                            image_data = base64.b64decode(part.text)
+                            break
+                        except:
+                            pass
+            
+            if image_data and isinstance(image_data, bytes):
+                img_base64 = base64.b64encode(image_data).decode('utf-8')
+                data_url = f"data:image/png;base64,{img_base64}"
+            else:
+                # Fallback: generate SVG or use placeholder
+                data_url = generate_svg_placeholder(prompt)
         else:
-            # Try alternative extraction
-            image_data = response.text
-        
-        # Convert to base64
-        if isinstance(image_data, bytes):
-            img_base64 = base64.b64encode(image_data).decode('utf-8')
-            data_url = f"data:image/png;base64,{img_base64}"
-        else:
-            # If text response, generate fallback
-            data_url = generate_fallback_image(prompt)
+            data_url = generate_svg_placeholder(prompt)
         
         return jsonify({
             'image': data_url,
@@ -84,51 +85,51 @@ def generate_image():
         })
         
     except Exception as e:
-        print(f"Error generating image: {e}")
-        # Fallback to placeholder
+        print(f"Error: {e}")
         return jsonify({
-            'image': generate_fallback_image(prompt),
+            'image': generate_svg_placeholder(prompt),
             'prompt': prompt
         })
 
-def generate_fallback_image(prompt):
-    """Generate a fallback image using PIL (for demo without API key)"""
-    from PIL import Image, ImageDraw, ImageFont
-    import random
+def generate_svg_placeholder(prompt):
+    """Generate a simple SVG placeholder without requiring Pillow"""
+    # Create a deterministic color based on prompt
+    hash_val = sum(ord(c) for c in prompt) % 360
+    color1 = f"hsl({hash_val}, 70%, 55%)"
+    color2 = f"hsl({(hash_val + 60) % 360}, 70%, 45%)"
     
-    # Create a colorful image
-    img = Image.new('RGB', (512, 512), color=(240, 240, 255))
-    draw = ImageDraw.Draw(img)
+    # Generate random shapes as SVG
+    shapes = []
+    for i in range(10):
+        x = random.randint(10, 90)
+        y = random.randint(10, 90)
+        r = random.randint(5, 30)
+        colors = [color1, color2, "white", "#ff6b6b", "#4ecdc4", "#45b7d1"]
+        shapes.append(f'<circle cx="{x}%" cy="{y}%" r="{r}" fill="{random.choice(colors)}" opacity="0.3"/>')
     
-    # Random colors based on prompt
-    random.seed(hash(prompt) % 100000)
-    colors = [
-        (random.randint(50, 200), random.randint(50, 200), random.randint(50, 200))
-        for _ in range(5)
-    ]
-    
-    # Draw random shapes
-    for _ in range(20):
-        x = random.randint(0, 512)
-        y = random.randint(0, 512)
-        r = random.randint(20, 100)
-        draw.ellipse([x-r, y-r, x+r, y+r], fill=colors[random.randint(0, len(colors)-1)], outline=None)
-    
-    # Add text
-    try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 30)
-    except:
-        font = ImageFont.load_default()
-    
+    # Get first few words of prompt
     words = prompt.split()[:3]
-    text = '✨ ' + ' '.join(words) if words else '✨ CHITRA'
-    draw.text((256, 256), text, fill=(255, 255, 255), anchor="mm", font=font, stroke_width=2, stroke_fill=(0,0,0))
+    text = ' '.join(words) if words else 'CHITRA'
     
-    # Convert to base64
-    buffer = io.BytesIO()
-    img.save(buffer, format='PNG')
-    img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    return f"data:image/png;base64,{img_base64}"
+    svg = f'''<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:{color1};stop-opacity:1" />
+                <stop offset="100%" style="stop-color:{color2};stop-opacity:1" />
+            </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grad)"/>
+        {''.join(shapes)}
+        <text x="50%" y="50%" font-family="Arial" font-size="32" fill="white" text-anchor="middle" dominant-baseline="central" font-weight="bold" stroke="rgba(0,0,0,0.2)" stroke-width="2">
+            ✨ {text}
+        </text>
+        <text x="50%" y="70%" font-family="Arial" font-size="16" fill="rgba(255,255,255,0.6)" text-anchor="middle" dominant-baseline="central">
+            CHITRA AI
+        </text>
+    </svg>'''
+    
+    svg_base64 = base64.b64encode(svg.encode('utf-8')).decode('utf-8')
+    return f"data:image/svg+xml;base64,{svg_base64}"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
