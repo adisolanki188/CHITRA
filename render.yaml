@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: chitra-ai
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: |
+      echo "Installing system dependencies..."
+      apt-get update
+      apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libfreetype6-dev
+      echo "Installing Python packages..."
+      pip install --upgrade pip setuptools wheel
+      pip install -r requirements.txt
+    startCommand: gunicorn --timeout 120 --workers 1 app:app
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.10.13
+    healthCheckPath: /
+    autoDeploy: true
