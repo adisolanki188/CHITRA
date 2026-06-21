@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  // ---------- PAGE SWITCH ----------
+  // Page switching
   const pageBtns = document.querySelectorAll('.page-btn');
   const pages = {
     page1: document.getElementById('page1'),
@@ -19,67 +19,57 @@
     });
   });
 
-  // ---------- ELEMENTS ----------
+  // Elements
   const promptInput = document.getElementById('promptInput');
   const generateBtn = document.getElementById('generateBtn');
   const imageResult = document.getElementById('imageResult');
   const galleryGrid = document.getElementById('galleryGrid');
-
-  // In-memory history
   let imageHistory = [];
 
-  // ---------- API CALL (connect to Python backend) ----------
-  async function generateImageFromPrompt(prompt) {
-    // In production: this calls your Flask/FastAPI backend
-    // For demo, we simulate with canvas generation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 512;
-        const ctx = canvas.getContext('2d');
-
-        let hash = 0;
-        for (let i = 0; i < prompt.length; i++) {
-          hash = prompt.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const hue = Math.abs(hash % 360);
-        const sat = 60 + (hash % 30);
-        const lig = 50 + (hash % 20);
-
-        const grd = ctx.createRadialGradient(256, 256, 30, 256, 256, 300);
-        grd.addColorStop(0, `hsl(${hue}, ${sat}%, ${lig+20}%)`);
-        grd.addColorStop(1, `hsl(${hue+40}, ${sat-10}%, ${lig-15}%)`);
-        ctx.fillStyle = grd;
-        ctx.fillRect(0, 0, 512, 512);
-
-        for (let i = 0; i < 20; i++) {
-          ctx.beginPath();
-          const x = Math.random() * 512;
-          const y = Math.random() * 512;
-          const r = 20 + Math.random() * 80;
-          const alpha = 0.1 + Math.random() * 0.3;
-          ctx.arc(x, y, r, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(${hue+60+i*20}, 80%, 70%, ${alpha})`;
-          ctx.fill();
-        }
-
-        ctx.font = 'bold 28px Inter, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.shadowColor = 'rgba(0,0,0,0.2)';
-        ctx.shadowBlur = 12;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const words = prompt.split(' ').slice(0, 3).join(' ');
-        ctx.fillText('✨ ' + (words || 'AI'), 256, 256);
-
-        const dataUrl = canvas.toDataURL('image/png');
-        resolve(dataUrl);
-      }, 900 + Math.random() * 600);
-    });
+  // Load history from localStorage
+  function loadHistory() {
+    try {
+      const saved = localStorage.getItem('chitra_history');
+      if (saved) {
+        imageHistory = JSON.parse(saved);
+        renderGallery();
+      }
+    } catch (e) {
+      console.log('No saved history');
+    }
   }
 
-  // ---------- RENDER GALLERY ----------
+  // Save history to localStorage
+  function saveHistory() {
+    try {
+      localStorage.setItem('chitra_history', JSON.stringify(imageHistory));
+    } catch (e) {
+      console.log('Could not save history');
+    }
+  }
+
+  async function generateImageFromPrompt(prompt) {
+    const response = await fetch('/generate', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ prompt })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server error: ${response.status} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    return data;
+  }
+
   function renderGallery() {
     galleryGrid.innerHTML = '';
     if (imageHistory.length === 0) {
@@ -94,14 +84,13 @@
         <img src="${item.dataUrl}" alt="generated">
         <div class="info">
           <p>${item.prompt}</p>
-          <span><i class="far fa-clock"></i> just now</span>
+          <span><i class="far fa-clock"></i> ${item.timestamp || 'just now'}</span>
         </div>
       `;
       galleryGrid.appendChild(div);
     });
   }
 
-  // ---------- SHOW RESULT (with loading) ----------
   function setResultLoading(isLoading) {
     if (isLoading) {
       imageResult.innerHTML = `
@@ -118,14 +107,18 @@
     }
   }
 
-  function displayImage(dataUrl, prompt) {
+  function displayImage(dataUrl, prompt, timestamp) {
     imageResult.innerHTML = `<img src="${dataUrl}" alt="generated image">`;
-    imageHistory.push({ dataUrl, prompt });
+    imageHistory.push({ 
+      dataUrl, 
+      prompt, 
+      timestamp: timestamp || new Date().toLocaleString() 
+    });
     if (imageHistory.length > 20) imageHistory.shift();
+    saveHistory();
     renderGallery();
   }
 
-  // ---------- GENERATE ACTION ----------
   async function handleGenerate() {
     const prompt = promptInput.value.trim();
     if (!prompt) {
@@ -135,17 +128,17 @@
 
     setResultLoading(true);
     try {
-      const dataUrl = await generateImageFromPrompt(prompt);
-      displayImage(dataUrl, prompt);
+      const result = await generateImageFromPrompt(prompt);
+      displayImage(result.image, result.prompt, result.timestamp);
     } catch (error) {
-      alert('Generation failed. Please try again.');
-      console.error(error);
+      alert('Generation failed: ' + error.message);
+      console.error('Error:', error);
     } finally {
       setResultLoading(false);
     }
   }
 
-  // ---------- EVENT LISTENERS ----------
+  // Event listeners
   generateBtn.addEventListener('click', handleGenerate);
   promptInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') handleGenerate();
@@ -157,8 +150,11 @@
     setTimeout(() => this.style.transform = '', 300);
   });
 
-  // ---------- SEED WITH A DEMO IMAGE ----------
-  window.addEventListener('load', function() {
+  // Load history on startup
+  loadHistory();
+
+  // Seed with demo image if no history
+  if (imageHistory.length === 0) {
     const demoCanvas = document.createElement('canvas');
     demoCanvas.width = 200;
     demoCanvas.height = 200;
@@ -174,9 +170,13 @@
     ctx.textBaseline = 'middle';
     ctx.fillText('✨ CHITRA', 100, 100);
     const demoUrl = demoCanvas.toDataURL('image/png');
-    imageHistory.push({ dataUrl: demoUrl, prompt: 'welcome to CHITRA' });
+    imageHistory.push({ 
+      dataUrl: demoUrl, 
+      prompt: 'Welcome to CHITRA', 
+      timestamp: new Date().toLocaleString() 
+    });
+    saveHistory();
     renderGallery();
-    displayImage(demoUrl, 'welcome to CHITRA');
-  });
-
+    displayImage(demoUrl, 'Welcome to CHITRA', new Date().toLocaleString());
+  }
 })();
