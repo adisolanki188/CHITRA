@@ -1,0 +1,16 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+*.db
+*.sqlite
+.DS_Store
+*.log
+*.pid
+*.seed
+*.pid.lock
