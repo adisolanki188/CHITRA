@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>CHITRA · AI Vision</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+  <div class="app-container" id="app">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo-area">
+        <div class="logo-icon"><i class="fas fa-palette"></i></div>
+        <div class="logo-text">CH<span>IT</span>RA</div>
+      </div>
+      <div class="page-toggle">
+        <button class="page-btn active" data-page="page1"><i class="fas fa-wand-magic-sparkles"></i> <span class="hide-mobile">Create</span></button>
+        <button class="page-btn" data-page="page2"><i class="fas fa-clock-rotate-left"></i> <span class="hide-mobile">History</span></button>
+      </div>
+    </div>
+
+    <!-- PAGE 1 : GENERATOR -->
+    <div id="page1" class="page active-page">
+      <div class="generator-title">✨ Generate image</div>
+      <div class="generator-sub"><i class="fas fa-circle-check"></i> powered by AI</div>
+
+      <div class="prompt-area">
+        <input type="text" id="promptInput" placeholder="Describe your vision..." value="a futuristic city with neon lights" />
+        <button class="generate-btn" id="generateBtn"><i class="fas fa-arrow-right"></i> Generate</button>
+      </div>
+
+      <!-- result display -->
+      <div class="image-result" id="imageResult">
+        <div class="placeholder-icon"><i class="fas fa-image"></i></div>
+        <div class="placeholder-text">Your image will appear here</div>
+      </div>
+
+      <div class="info-row">
+        <span><i class="far fa-clock"></i> instant</span>
+        <span><i class="fas fa-shield-alt"></i> private</span>
+      </div>
+    </div>
+
+    <!-- PAGE 2 : GALLERY (history) -->
+    <div id="page2" class="page">
+      <div class="gallery-header">
+        <h3><i class="fas fa-images" style="margin-right: 8px; color:#4f7df3;"></i> Recent</h3>
+        <i class="fas fa-rotate-right" id="refreshHistory"></i>
+      </div>
+      <div class="gallery-grid" id="galleryGrid">
+        <div class="empty-gallery">
+          <i class="fas fa-box-open"></i>
+          <p>No images yet. Generate your first!</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
