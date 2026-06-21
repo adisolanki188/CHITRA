@@ -1,0 +1,367 @@
+/* ----- RESET & BASE ----- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  background: #f2f4f8;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* ----- MAIN CARD (mobile-first) ----- */
+.app-container {
+  max-width: 480px;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 20px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+  padding: 24px 20px 32px;
+  transition: all 0.2s ease;
+}
+
+/* ----- HEADER / PAGE INDICATOR ----- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  background: #1e293b;
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.04);
+}
+
+.logo-text {
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  color: #0b1a2b;
+}
+
+.logo-text span {
+  color: #4f7df3;
+}
+
+.page-toggle {
+  display: flex;
+  background: #eef1f5;
+  border-radius: 40px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.page-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5a6b;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-btn i {
+  font-size: 13px;
+}
+
+.page-btn.active {
+  background: white;
+  color: #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  font-weight: 600;
+}
+
+/* ----- PAGES (show/hide) ----- */
+.page {
+  display: none;
+  animation: fade 0.25s ease;
+}
+
+.page.active-page {
+  display: block;
+}
+
+@keyframes fade {
+  0% { opacity: 0.5; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ----- PAGE 1: GENERATOR ----- */
+.generator-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #0b1a2b;
+  margin-bottom: 4px;
+}
+
+.generator-sub {
+  color: #6e7f91;
+  font-size: 14px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.generator-sub i {
+  color: #4f7df3;
+}
+
+/* FIXED: Proper button alignment */
+.prompt-area {
+  background: #f8faff;
+  border-radius: 28px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #e6ecf3;
+  transition: 0.2s;
+  margin-bottom: 18px;
+  gap: 4px;
+}
+
+.prompt-area:focus-within {
+  border-color: #4f7df3;
+  box-shadow: 0 0 0 4px rgba(79, 125, 243, 0.12);
+}
+
+.prompt-area input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 14px 16px;
+  font-size: 15px;
+  outline: none;
+  color: #1a2a3a;
+  min-width: 0;
+}
+
+.prompt-area input::placeholder {
+  color: #a5b6c9;
+  font-weight: 400;
+}
+
+.generate-btn {
+  background: #1e293b;
+  color: white;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  height: 48px;
+}
+
+.generate-btn i {
+  font-size: 15px;
+}
+
+.generate-btn:active {
+  transform: scale(0.96);
+  background: #2d3b4f;
+}
+
+.generate-btn:disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* image result */
+.image-result {
+  margin: 20px 0 12px;
+  border-radius: 32px;
+  background: #f1f5f9;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border: 1px dashed #d0d9e6;
+  transition: all 0.3s;
+  overflow: hidden;
+  position: relative;
+}
+
+.image-result img {
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+  object-fit: contain;
+  display: block;
+  border-radius: 28px;
+}
+
+.placeholder-icon {
+  color: #b2c3d6;
+  font-size: 48px;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.placeholder-text {
+  color: #8b9db1;
+  font-size: 14px;
+  font-weight: 450;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 0;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e6ecf3;
+  border-top: 4px solid #1e293b;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #6e7f91;
+}
+
+/* ----- PAGE 2: GALLERY / HISTORY ----- */
+.gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.gallery-header h3 {
+  font-weight: 600;
+  font-size: 20px;
+  color: #0b1a2b;
+}
+
+.gallery-header i {
+  color: #4f7df3;
+  background: #eef4ff;
+  padding: 8px 12px;
+  border-radius: 40px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.gallery-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gallery-item {
+  background: #f8faff;
+  border-radius: 24px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #eef2f7;
+}
+
+.gallery-item img {
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  object-fit: cover;
+  background: #e6ecf3;
+}
+
+.gallery-item .info {
+  flex: 1;
+}
+
+.gallery-item .info p {
+  font-weight: 500;
+  color: #1a2a3a;
+  font-size: 15px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.gallery-item .info span {
+  font-size: 12px;
+  color: #8b9db1;
+}
+
+.empty-gallery {
+  text-align: center;
+  padding: 40px 0;
+  color: #9aabbe;
+}
+
+.empty-gallery i {
+  font-size: 42px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+/* ----- RESPONSIVE FINE-TUNE ----- */
+@media (max-width: 420px) {
+  .app-container { padding: 20px 16px; }
+  .generate-btn { 
+    padding: 10px 16px; 
+    font-size: 13px;
+    height: 44px;
+  }
+  .prompt-area { padding: 4px; }
+  .prompt-area input { padding: 12px 12px; font-size: 14px; }
+  .page-btn { padding: 6px 12px; font-size: 12px; }
+  .logo-text { font-size: 18px; }
+}
+
+@media (max-width: 480px) {
+  .hide-mobile { display: none; }
+}
